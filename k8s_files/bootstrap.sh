@@ -60,4 +60,4 @@ echo "[TASK 13] enable & start kubelet."
 systemctl enable kubelet >/dev/null 2>&1
 systemctl start kubelet >/dev/null 2>&1
 systemctl status kubelet
-
+#
