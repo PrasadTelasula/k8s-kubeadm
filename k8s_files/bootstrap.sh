@@ -1,46 +1,42 @@
-echo "[TASK 1] Update machine."
-yum update -y >/dev/null 2>&1
+# Install docker from Docker-ce repository
+echo "[TASK 1] Install docker container engine"
+yum install wget vim git -y
+yum install -y -q yum-utils device-mapper-persistent-data lvm2 > /dev/null 2>&1
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo > /dev/null 2>&1
+yum install -y -q docker-ce >/dev/null 2>&1
 
-echo "[TASK 2] Install dependency Packages."
-yum install vim wget yum-utils device-mapper-persistent-data lvm2 -y
-
-echo "[TASK 3] Add Docker repository."
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-echo "[TASK 4] Install Docker"
-yum install docker-ce-18.06.2.ce -y
-
-echo "[TASK 5] Enable, Start & Check Docker service Status."
-systemctl enable docker
+# Enable docker service
+echo "[TASK 2] Enable and start docker service"
+systemctl enable docker >/dev/null 2>&1
 systemctl start docker
-systemctl status docker
 
-echo "[TASK 6] Disable SELinux."
+# Disable SELinux
+echo "[TASK 3] Disable SELinux"
 setenforce 0
 sed -i --follow-symlinks 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/sysconfig/selinux
 
-echo "[TASK 7] Disable firewalld."
+# Stop and disable firewalld
+echo "[TASK 4] Stop and Disable firewalld"
 systemctl disable firewalld >/dev/null 2>&1
-systemctl stop firewalld >/dev/null 2>&1
+systemctl stop firewalld
 
-echo "[TASK 8] k8s configure ip6tables."
+# Add sysctl settings
+echo "[TASK 5] Add sysctl settings"
 cat >>/etc/sysctl.d/kubernetes.conf<<EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
 EOF
 sysctl --system >/dev/null 2>&1
 
-echo "[TASK 9] off SWAP"
-sudo sed -i '/swap/d' /etc/fstab
-sudo swapoff -a
 
-echo "[TASK 10] "
-cat >>/etc/containerd/config.toml<<EOF
-plugins.cri.systemd_cgroup = true
-EOF
 
-echo "[TASK 11] Add kubernetes Repository."
-#Add yum repo file for kubernetes
+# Disable swap
+echo "[TASK 6] Disable and turn off SWAP"
+sed -i '/swap/d' /etc/fstab
+swapoff -a
+
+# Add yum repo file for Kubernetes
+echo "[TASK 7] Add yum repo file for kubernetes"
 cat >>/etc/yum.repos.d/kubernetes.repo<<EOF
 [kubernetes]
 name=Kubernetes
@@ -51,13 +47,14 @@ repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOF
-yum repolist -y
 
-echo "[TASK 12] Install kubeadm, kubelet & kubectl version 1.15.3"
-yum install -y -q kubeadm-1.15.3 kubelet-1.15.3 kubectl-1.15.3
+# Install Kubernetes
+echo "[TASK 8] Install Kubernetes (kubeadm, kubelet and kubectl)"
+# yum install -y -q kubeadm kubelet kubectl >/dev/null 2>&1
+# Version 1.19.4
+yum install -y -q kubeadm-1.19.4 kubelet-1.19.4 kubectl-1.19.4 >/dev/null 2>&1
 
-echo "[TASK 13] enable & start kubelet."
+# Start and Enable kubelet service
+echo "[TASK 9] Enable and start kubelet service"
 systemctl enable kubelet >/dev/null 2>&1
 systemctl start kubelet >/dev/null 2>&1
-systemctl status kubelet
-#
